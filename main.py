@@ -49,10 +49,9 @@ def detect_expression(image):
 
 def main():
     st.title("Facial Expression Recognition")
-    st.write("Choose an option to detect and classify facial expressions.")
 
     option = st.sidebar.selectbox(
-        "Select Input Option",
+        "Choose an option to detect and classify facial expressions.",
         ("Built-in Webcam", "External Camera", "Image or Video")
     )
 
@@ -73,8 +72,20 @@ def main():
             cv2.destroyAllWindows()
 
     elif option == "External Camera":
-        st.write("External Camera selected")
-        # Add your code here to handle external camera input
+        camera_address = st.text_input("Camera Address (e.g: http://192.168.137.101:4747/video )")
+        if camera_address:
+            vid = cv2.VideoCapture(camera_address)
+            st.title( 'Using Mobile Camera with Streamlit' )
+            frame_window = st.image( [] )
+            take_picture_button = st.button( 'Take Picture' )
+
+            while True:
+                got_frame , frame = vid.read()
+                frame = cv2.cvtColor( frame , cv2.COLOR_BGR2RGB )
+                if got_frame:
+                    frame_window.image(frame)
+
+            vid.release()
 
     elif option == "Image or Video":
         uploaded_file = st.file_uploader("Choose an image or video file", type=["jpg", "jpeg", "png", "mp4"])
