@@ -1,8 +1,9 @@
 import streamlit as st
 import cv2
-from PIL import Image
+from PIL import Image, ImageDraw
 import numpy as np
 from keras.models import model_from_json
+from fer import FER
 
 # Load pre-trained facial expression recognition model
 # (Assuming you have a pre-trained model stored as 'model.h5')
@@ -16,37 +17,28 @@ model.load_weights("./model/emotion_model1.h5")
 
 # Define class labels for facial expressions
 class_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
+detector = FER(mtcnn=True)
 
 def detect_expression(image):
-    # Convert image to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    face_info = detector.detect_emotions(image)
+    if face_info:
+        bounding_box = face_info[0]["box"]
+        cv2.rectangle(image, (
+            bounding_box[0], bounding_box[1]),
+            (bounding_box[0] + bounding_box[2], bounding_box[1] + bounding_box[3]),
+            (0, 155, 255), 2)
 
-    # Perform face detection using a pre-trained cascade classifier
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+        emotion_name = detector.top_emotion(image)[0]
 
-    # Process each detected face
-    for (x, y, w, h) in faces:
-        face_roi = gray[y:y+h, x:x+w]  # Extract the region of interest (face)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        text_size, _ = cv2.getTextSize(emotion_name, font, 0.5, 1)
 
-        # Resize face ROI to match the input size of the model
-        face_roi = cv2.resize(face_roi, (48, 48))
-        face_roi = np.expand_dims(face_roi, axis=0)
-        face_roi = np.expand_dims(face_roi, axis=-1)
-
-        # Normalize the face ROI
-        face_roi = face_roi / 255.0
-
-        # Predict facial expression using the pre-trained model
-        expression_probs = model.predict(face_roi)[0]
-        predicted_expression = class_labels[np.argmax(expression_probs)]
-
-        # Draw bounding box and predicted expression label on the image
-        cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        cv2.putText(image, predicted_expression, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+        cv2.putText(image, emotion_name,
+                    (bounding_box[0], bounding_box[1] - 10),
+                    font, 0.9, (0, 255, 0), 2)
 
     return image
-
+    
 def main():
     st.title("Facial Expression Recognition")
 
@@ -77,12 +69,12 @@ def main():
             vid = cv2.VideoCapture(camera_address)
             st.title( 'Using Mobile Camera with Streamlit' )
             frame_window = st.image( [] )
-            take_picture_button = st.button( 'Take Picture' )
 
             while True:
                 got_frame , frame = vid.read()
                 frame = cv2.cvtColor( frame , cv2.COLOR_BGR2RGB )
                 if got_frame:
+                    frame = detect_expression(frame)
                     frame_window.image(frame)
 
             vid.release()
