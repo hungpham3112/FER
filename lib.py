@@ -1,7 +1,7 @@
 import cv2
 from fer import FER
 
-detector = FER(mtcnn=True)
+detector = FER()
 
 def detect_expression(image):
     face_info = detector.detect_emotions(image)

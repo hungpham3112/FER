@@ -1,22 +1,9 @@
 import streamlit as st
 import cv2
 from PIL import Image
+import tensorflow as tf
 import numpy as np
-from keras.models import model_from_json
 from lib import detect_expression
-
-# Load pre-trained facial expression recognition model
-# (Assuming you have a pre-trained model stored as 'model.h5')
-json_file = open('./model/emotion_model1.json', 'r')
-loaded_model_json = json_file.read()
-json_file.close()
-model = model_from_json(loaded_model_json)
-
-# load weights into new model
-model.load_weights("./model/emotion_model1.h5")
-
-# Define class labels for facial expressions
-class_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
     
 def main():
@@ -26,16 +13,21 @@ def main():
         "Choose an option to detect and classify facial expressions.",
         ("Built-in Webcam", "External Camera", "Image or Video")
     )
+    frame_skip_rate = 3  # Best optimize frame
 
     if option == "Built-in Webcam":
         video_capture = cv2.VideoCapture(0)
         if not video_capture.isOpened():
             st.error("Failed to recognize built-in camera. Please choose other options.")
         else:
+            frame_count = 0  # Initialize frame count
             while True:
                 ret, frame = video_capture.read()
-                frame = detect_expression(frame)
-                st.image(frame, channels="BGR", caption="Facial Expression Recognition")
+                if frame_count % frame_skip_rate == 0:  # Process this frame
+                    frame = detect_expression(frame)
+                    st.image(frame, channels="BGR", caption="Facial Expression Recognition")
+
+                frame_count += 1  # Increment frame count
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -47,15 +39,18 @@ def main():
         camera_address = st.text_input("Camera Address (e.g: http://192.168.137.101:4747/video )")
         if camera_address:
             vid = cv2.VideoCapture(camera_address)
-            st.title( 'Using Mobile Camera with Streamlit' )
-            frame_window = st.image( [] )
-
+            st.title('Using Mobile Camera with Streamlit')
+            frame_window = st.image([])
+            
+            frame_count = 0  # Initialize frame count
             while True:
-                got_frame , frame = vid.read()
-                frame = cv2.cvtColor(frame , cv2.COLOR_BGR2RGB)
+                got_frame, frame = vid.read()
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 if got_frame:
-                    #  frame_window.image(detect_expression(frame))
-                    frame_window.image(frame)
+                    if frame_count % frame_skip_rate == 0:  # Process this frame
+                        frame_window.image(detect_expression(frame))
+
+                frame_count += 1  # Increment frame count
 
     elif option == "Image or Video":
         uploaded_file = st.file_uploader("Choose an image or video file", type=["jpg", "jpeg", "png", "mp4"])
@@ -71,4 +66,15 @@ def main():
                 # Add your code here to process the video file
 
 if __name__ == "__main__":
+    gpus = tf.config.list_physical_devices('GPU')
+    if gpus:
+      try:
+        # Currently, memory growth needs to be the same across GPUs
+        for gpu in gpus:
+          tf.config.experimental.set_memory_growth(gpu, True)
+        logical_gpus = tf.config.list_logical_devices('GPU')
+        print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+      except RuntimeError as e:
+        # Memory growth must be set before GPUs have been initialized
+        print(e)
     main()
