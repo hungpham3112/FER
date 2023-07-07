@@ -3,4 +3,5 @@ fer
 Pillow
 opencv-python-headless
 streamlit
+streamlit-webrtc
 tensorflow
