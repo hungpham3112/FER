@@ -1,9 +1,9 @@
 import streamlit as st
 import cv2
-from PIL import Image, ImageDraw
+from PIL import Image
 import numpy as np
 from keras.models import model_from_json
-from fer import FER
+from lib import detect_expression
 
 # Load pre-trained facial expression recognition model
 # (Assuming you have a pre-trained model stored as 'model.h5')
@@ -17,27 +17,7 @@ model.load_weights("./model/emotion_model1.h5")
 
 # Define class labels for facial expressions
 class_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
-detector = FER(mtcnn=True)
 
-def detect_expression(image):
-    face_info = detector.detect_emotions(image)
-    if face_info:
-        bounding_box = face_info[0]["box"]
-        cv2.rectangle(image, (
-            bounding_box[0], bounding_box[1]),
-            (bounding_box[0] + bounding_box[2], bounding_box[1] + bounding_box[3]),
-            (0, 155, 255), 2)
-
-        emotion_name = detector.top_emotion(image)[0]
-
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        text_size, _ = cv2.getTextSize(emotion_name, font, 0.5, 1)
-
-        cv2.putText(image, emotion_name,
-                    (bounding_box[0], bounding_box[1] - 10),
-                    font, 0.9, (0, 255, 0), 2)
-
-    return image
     
 def main():
     st.title("Facial Expression Recognition")
@@ -72,12 +52,10 @@ def main():
 
             while True:
                 got_frame , frame = vid.read()
-                frame = cv2.cvtColor( frame , cv2.COLOR_BGR2RGB )
+                frame = cv2.cvtColor(frame , cv2.COLOR_BGR2RGB)
                 if got_frame:
-                    frame = detect_expression(frame)
+                    #  frame_window.image(detect_expression(frame))
                     frame_window.image(frame)
-
-            vid.release()
 
     elif option == "Image or Video":
         uploaded_file = st.file_uploader("Choose an image or video file", type=["jpg", "jpeg", "png", "mp4"])
