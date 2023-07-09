@@ -54,39 +54,42 @@ def main():
         "Choose an option to detect and classify facial expressions.",
         ("Built-in Webcam", "External Camera", "Image or Video")
     )
-
+    frame_skip_rate = 5  # Best optimize frame
     if option == "Built-in Webcam":
-        video_capture = cv2.VideoCapture(0)
-        if not video_capture.isOpened():
+        # webrtc_streamer(key="example", video_frame_callback=video_frame_callback)
+        vid = cv2.VideoCapture(0)
+        if not vid.isOpened():
             st.error("Failed to recognize built-in camera. Please choose other options.")
         else:
+            st.title('Using Mobile Camera with Streamlit')
+            frame_window = st.image([])
+            
+            frame_count = 0  # Initialize frame count
             while True:
-                ret, frame = video_capture.read()
-                frame = detect_expression(frame)
-                st.image(frame, channels="BGR", caption="Facial Expression Recognition")
+                got_frame, frame = vid.read()
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                if got_frame:
+                    if frame_count % frame_skip_rate == 0:  # Process this frame
+                        frame_window.image(detect_expression(frame))
 
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-
-            video_capture.release()
-            cv2.destroyAllWindows()
+                frame_count += 1
 
     elif option == "External Camera":
-        camera_address = st.text_input("Camera Address (e.g: http://192.168.137.101:4747/video )")
+        camera_address = st.text_input("Camera Address (e.g: http://192.168.137.101:4747/video)")
         if camera_address:
             vid = cv2.VideoCapture(camera_address)
-            st.title( 'Using Mobile Camera with Streamlit' )
-            frame_window = st.image( [] )
-            take_picture_button = st.button( 'Take Picture' )
-
+            st.title('Using Mobile Camera with Streamlit')
+            frame_window = st.image([])
+            
+            frame_count = 0  # Initialize frame count
             while True:
-                got_frame , frame = vid.read() 
-                frame = cv2.cvtColor( frame , cv2.COLOR_BGR2RGB )
+                got_frame, frame = vid.read()
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 if got_frame:
-                    new_frame = detect_expression(frame)
-                    frame_window.image(new_frame)
-            vid.release()
+                    if frame_count % frame_skip_rate == 0:  # Process this frame
+                        frame_window.image(detect_expression(frame))
 
+                frame_count += 1  # Increment frame count
 
     elif option == "Image or Video":
         uploaded_file = st.file_uploader("Choose an image or video file", type=["jpg", "jpeg", "png", "mp4"])
