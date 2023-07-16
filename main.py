@@ -5,13 +5,6 @@ import tensorflow as tf
 import numpy as np
 from lib import detect_expression
 
-    
-# def video_frame_callback(frame):
-#     img = frame.to_ndarray(format="bgr24")
-#     new_frame = detect_expression(frame)
-#     return av.VideoFrame.from_ndarray(new_frame, format="bgr24")
-
-    
 def main():
     st.title("Facial Expression Recognition")
 
@@ -37,7 +30,6 @@ def main():
                 if got_frame:
                     if frame_count % frame_skip_rate == 0:  # Process this frame
                         frame_window.image(detect_expression(frame))
-
                 frame_count += 1
 
     elif option == "External Camera":
@@ -54,7 +46,6 @@ def main():
                 if got_frame:
                     if frame_count % frame_skip_rate == 0:  # Process this frame
                         frame_window.image(detect_expression(frame))
-
                 frame_count += 1  # Increment frame count
 
 
