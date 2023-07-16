@@ -20,7 +20,7 @@ def main():
         if not vid.isOpened():
             st.error("Failed to recognize built-in camera. Please choose other options.")
         else:
-            st.title('Using Mobile Camera with Streamlit')
+            st.title('Using Webcam with Streamlit')
             frame_window = st.image([])
             
             frame_count = 0  # Initialize frame count
